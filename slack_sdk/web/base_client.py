@@ -413,7 +413,11 @@ class BaseClient:
                     body_string = resp["body"] if isinstance(resp["body"], str) else None
                     body_bytes = body_string.encode("utf-8") if body_string is not None else resp["body"]
                     if body_string is not None and body_string.startswith("{"):
-                        body = json.loads(body_string)
+                        try:
+                            body = json.loads(body_string)
+                        except json.decoder.JSONDecodeError:
+                            # Malformed JSON is handled by the guarded decoding after the retry loop, not raised here.
+                            body = {}  # type: ignore[assignment]
                     else:
                         body = {}  # type: ignore[assignment]
                     retry_response = RetryHttpResponse(
